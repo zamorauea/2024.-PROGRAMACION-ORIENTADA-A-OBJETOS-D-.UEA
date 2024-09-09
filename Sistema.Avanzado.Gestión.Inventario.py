@@ -1,126 +1,134 @@
-import json
+class Libro:
+    def __init__(self, titulo, autor, categoria, isbn):
+        self.detalles = (titulo, autor)  # Usamos una tupla para título y autor (inmutables)
+        self.categoria = categoria
+        self.isbn = isbn
 
-# Clase Producto: Define los atributos de un producto.
-class Producto:
-    def __init__(self, id_producto, nombre, cantidad, precio):
-        self.id_producto = id_producto
+    def __repr__(self):
+        return f"Libro(titulo='{self.detalles[0]}', autor='{self.detalles[1]}', categoria='{self.categoria}', isbn='{self.isbn}')"
+
+
+class Usuario:
+    def __init__(self, nombre, id_usuario):
         self.nombre = nombre
-        self.cantidad = cantidad
-        self.precio = precio
+        self.id_usuario = id_usuario
+        self.libros_prestados = []  # Lista para gestionar libros prestados
 
-    def __str__(self):
-        # Representación en cadena de un producto.
-        return f"ID: {self.id_producto}, Nombre: {self.nombre}, Cantidad: {self.cantidad}, Precio: ${self.precio:.2f}"
+    def prestar_libro(self, libro):
+        self.libros_prestados.append(libro)
+        print(f"Libro '{libro.detalles[0]}' prestado a {self.nombre}.")
+
+    def devolver_libro(self, libro):
+        if libro in self.libros_prestados:
+            self.libros_prestados.remove(libro)
+            print(f"Libro '{libro.detalles[0]}' devuelto por {self.nombre}.")
+        else:
+            print(f"El libro '{libro.detalles[0]}' no está prestado a {self.nombre}.")
+
+    def listar_libros_prestados(self):
+        return [libro.detalles[0] for libro in self.libros_prestados]  # Devuelve solo los títulos
+
+    def __repr__(self):
+        return f"Usuario(nombre='{self.nombre}', id_usuario='{self.id_usuario}')"
 
 
-# Clase Inventario: Gestiona la colección de productos usando un diccionario.
-class Inventario:
+class Biblioteca:
     def __init__(self):
-        self.productos = {}
+        self.libros = {}  # Diccionario de libros con ISBN como clave
+        self.usuarios = {}  # Diccionario de usuarios con ID de usuario como clave
 
-    # Cargar el inventario desde un archivo JSON.
-    def cargar_inventario(self, archivo='inventario.json'):
-        try:
-            with open(archivo, 'r') as f:
-                data = json.load(f)
-                # Reconstruir los objetos Producto desde los datos cargados.
-                for id_producto, info in data.items():
-                    self.productos[id_producto] = Producto(
-                        id_producto, info['nombre'], info['cantidad'], info['precio']
-                    )
-            print("Inventario cargado correctamente.")
-        except FileNotFoundError:
-            print("Archivo de inventario no encontrado. Se creará uno nuevo al guardar.")
-        except json.JSONDecodeError:
-            print("Error al leer el archivo de inventario. Asegúrese de que el formato sea correcto.")
-
-    # Guardar el inventario en un archivo JSON.
-    def guardar_inventario(self, archivo='inventario.json'):
-        try:
-            # Convertir los objetos Producto a un diccionario para guardar en JSON.
-            data = {id_producto: vars(producto) for id_producto, producto in self.productos.items()}
-            with open(archivo, 'w') as f:
-                json.dump(data, f, indent=4)
-            print("Inventario guardado.")
-        except Exception as e:
-            print(f"Error al guardar el inventario: {e}")
-
-    # Agregar un producto al inventario.
-    def agregar_producto(self, producto):
-        if producto.id_producto in self.productos:
-            print("El producto ya existe.")
+    def añadir_libro(self, libro):
+        if libro.isbn not in self.libros:
+            self.libros[libro.isbn] = libro
+            print(f"Libro '{libro.detalles[0]}' añadido a la biblioteca.")
         else:
-            self.productos[producto.id_producto] = producto
-            print(f"Producto '{producto.nombre}' agregado.")
+            print(f"El libro con ISBN {libro.isbn} ya existe.")
 
-    # Eliminar un producto del inventario por ID.
-    def eliminar_producto(self, id_producto):
-        if id_producto in self.productos:
-            del self.productos[id_producto]
-            print(f"Producto {id_producto} eliminado.")
+    def quitar_libro(self, isbn):
+        if isbn in self.libros:
+            libro = self.libros.pop(isbn)
+            print(f"Libro '{libro.detalles[0]}' quitado de la biblioteca.")
         else:
-            print("Producto no encontrado.")
+            print(f"No se encontró el libro con ISBN {isbn}.")
 
-    # Actualizar la cantidad o el precio de un producto por ID.
-    def actualizar_producto(self, id_producto, cantidad=None, precio=None):
-        if id_producto in self.productos:
-            producto = self.productos[id_producto]
-            if cantidad is not None:
-                producto.cantidad = cantidad
-            if precio is not None:
-                producto.precio = precio
-            print(f"Producto {id_producto} actualizado.")
+    def registrar_usuario(self, usuario):
+        if usuario.id_usuario not in self.usuarios:
+            self.usuarios[usuario.id_usuario] = usuario
+            print(f"Usuario '{usuario.nombre}' registrado.")
         else:
-            print("Producto no encontrado.")
+            print(f"El usuario con ID {usuario.id_usuario} ya está registrado.")
 
-    # Mostrar todos los productos en el inventario.
-    def mostrar_inventario(self):
-        if not self.productos:
-            print("El inventario está vacío.")
+    def dar_baja_usuario(self, id_usuario):
+        if id_usuario in self.usuarios:
+            usuario = self.usuarios.pop(id_usuario)
+            print(f"Usuario '{usuario.nombre}' dado de baja.")
         else:
-            for producto in self.productos.values():
-                print(producto)
+            print(f"No se encontró el usuario con ID {id_usuario}.")
 
-
-# Menú interactivo para gestionar el inventario.
-def menu():
-    inventario = Inventario()
-    inventario.cargar_inventario()
-
-    while True:
-        print("\n1. Agregar Producto\n2. Eliminar Producto\n3. Actualizar Producto\n4. Mostrar Inventario\n5. Guardar y Salir")
-        opcion = input("Seleccione una opción: ")
-
-        if opcion == '1':
-            id_producto = input("ID del Producto: ")
-            nombre = input("Nombre: ")
-            cantidad = int(input("Cantidad: "))
-            precio = float(input("Precio: "))
-            producto = Producto(id_producto, nombre, cantidad, precio)
-            inventario.agregar_producto(producto)
-            inventario.guardar_inventario()  # Guardar automáticamente después de agregar.
-        elif opcion == '2':
-            id_producto = input("ID del Producto a eliminar: ")
-            inventario.eliminar_producto(id_producto)
-            inventario.guardar_inventario()  # Guardar automáticamente después de eliminar.
-        elif opcion == '3':
-            id_producto = input("ID del Producto a actualizar: ")
-            cantidad = input("Nueva Cantidad (dejar en blanco si no cambia): ")
-            precio = input("Nuevo Precio (dejar en blanco si no cambia): ")
-            cantidad = int(cantidad) if cantidad else None
-            precio = float(precio) if precio else None
-            inventario.actualizar_producto(id_producto, cantidad, precio)
-            inventario.guardar_inventario()  # Guardar automáticamente después de actualizar.
-        elif opcion == '4':
-            inventario.mostrar_inventario()
-        elif opcion == '5':
-            inventario.guardar_inventario()  # Guardar antes de salir.
-            print("Inventario guardado. Saliendo...")
-            break
+    def prestar_libro(self, isbn, id_usuario):
+        libro = self.libros.get(isbn)
+        usuario = self.usuarios.get(id_usuario)
+        if libro and usuario:
+            usuario.prestar_libro(libro)
         else:
-            print("Opción no válida. Intente de nuevo.")
+            print(f"Error: libro o usuario no encontrado.")
+
+    def devolver_libro(self, isbn, id_usuario):
+        libro = self.libros.get(isbn)
+        usuario = self.usuarios.get(id_usuario)
+        if libro and usuario:
+            usuario.devolver_libro(libro)
+        else:
+            print(f"Error: libro o usuario no encontrado.")
+
+    def buscar_libro(self, **kwargs):
+        # Permite buscar por título, autor o categoría
+        resultados = []
+        for libro in self.libros.values():
+            if any(getattr(libro, key, None) == value for key, value in kwargs.items()):
+                resultados.append(libro)
+        return resultados
+
+    def listar_libros_prestados(self, id_usuario):
+        usuario = self.usuarios.get(id_usuario)
+        if usuario:
+            return usuario.listar_libros_prestados()
+        else:
+            print(f"Usuario con ID {id_usuario} no encontrado.")
+            return []
+
+    def __repr__(self):
+        return f"Biblioteca: {len(self.libros)} libros, {len(self.usuarios)} usuarios."
 
 
-# Punto de entrada del programa.
-if __name__ == "__main__":
-    menu()
+# Ejemplo de uso
+biblioteca = Biblioteca()
+
+# Añadir libros
+libro1 = Libro("El Hobbit", "J.R.R. Tolkien", "Fantasía", "2345")
+libro2 = Libro("1984", "George Orwell", "Distopía", "6789")
+biblioteca.añadir_libro(libro1)
+biblioteca.añadir_libro(libro2)
+
+# Registrar usuarios
+usuario1 = Usuario("Carlos Díaz", "u1001")
+usuario2 = Usuario("María López", "u1002")
+biblioteca.registrar_usuario(usuario1)
+biblioteca.registrar_usuario(usuario2)
+
+# Prestar libros
+biblioteca.prestar_libro("2345", "u1001")
+
+# Listar libros prestados por un usuario
+print("Libros prestados por Carlos Díaz:", biblioteca.listar_libros_prestados("u1001"))
+
+# Buscar libros
+print("Buscar libro por autor 'George Orwell':", biblioteca.buscar_libro(autor="George Orwell"))
+
+# Devolver libros
+biblioteca.devolver_libro("2345", "u1001")
+print("Libros prestados por Carlos Díaz después de devolver:", biblioteca.listar_libros_prestados("u1001"))
+
+# Quitar libro
+biblioteca.quitar_libro("6789")
+
